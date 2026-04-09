@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VSEPR 분자 구조 시뮬레이터</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+  :root {
+    --blue: #2563eb;
+    --blue-light: #dbeafe;
+    --blue-mid: #93c5fd;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --gray: #6b7280;
+    --gray-light: #f3f4f6;
+    --gray-border: #e5e7eb;
+    --text: #111827;
+    --text-sub: #6b7280;
+    --white: #ffffff;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #f0f4fa;
+    min-height: 100vh;
+    padding: 24px 16px;
+    color: var(--text);
+  }
+
+  .page-title {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .page-title h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--blue);
+    letter-spacing: -0.5px;
+  }
+  .page-title p {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-top: 5px;
+  }
+
+  .tab-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    padding: 10px 28px;
+    font-size: 15px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    border: 2px solid var(--gray-border);
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .tab-btn.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(37,99,235,0.18);
+  }
+  .tab-btn:hover:not(.active) {
+    border-color: var(--blue-mid);
+    color: var(--blue);
+  }
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 780px;
+    margin: 0 auto 16px;
+  }
+  @media(max-width: 580px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-border);
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .card-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue);
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  svg { display: block; width: 100%; }
+
+  /* Ring model styles */
+  .ring-body {
+    fill: none;
+    stroke: #aab4c8;
+    stroke-width: 3.5;
+  }
+  .ring-highlight {
+    fill: none;
+    stroke: rgba(255,255,255,0.55);
+    stroke-width: 1.5;
+  }
+  .ring-shadow {
+    fill: rgba(100,120,160,0.13);
+  }
+  .center-dot {
+    fill: #374151;
+  }
+  .connect-line {
+    stroke: #c7d0e0;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+  }
+  .tape-mark {
+    fill: rgba(37,99,235,0.18);
+    stroke: rgba(37,99,235,0.35);
+    stroke-width: 1;
+  }
+
+  /* Molecule model styles */
+  .bond-line {
+    stroke: #2563eb;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+  .bond-wedge {
+    fill: rgba(37,99,235,0.75);
+  }
+  .atom-outer {
+    fill: rgba(37,99,235,0.13);
+  }
+  .atom-inner {
+    fill: #2563eb;
+  }
+  .center-atom {
+    fill: #374151;
+  }
+  .angle-arc {
+    fill: none;
+    stroke: var(--red);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 2;
+    opacity: 0.7;
+  }
+  .angle-label {
+    font-size: 12px;
+    fill: var(--red);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+  }
+  .atom-label {
+    font-size: 11px;
+    fill: white;
+    font-family: 'Noto Sans KR', sans-serif;
+    text-anchor: middle;
+    dominant-baseline: central;
+    font-weight: 700;
+  }
+  .center-label {
+    font-size: 11px;
+    fill: white;
+    font-family: 'Noto Sans KR', sans-serif;
+    text-anchor: middle;
+    dominant-baseline: central;
+    font-weight: 700;
+  }
+
+  .info-card {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .info-top {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .info-item {
+    text-align: center;
+    background: var(--gray-light);
+    border-radius: 10px;
+    padding: 12px 8px;
+  }
+  .info-val {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .info-val.angle { color: var(--red); font-size: 17px; }
+  .info-key {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 3px;
+  }
+  .principle-box {
+    background: var(--blue-light);
+    border-radius: 10px;
+    padding: 13px 15px;
+    font-size: 14px;
+    color: #1e3a6e;
+    line-height: 1.7;
+  }
+  .principle-box strong { color: var(--blue); }
+
+  .legend-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+
+  .tetra-card {
+    max-width: 780px;
+    margin: 0 auto 16px;
+    display: none;
+  }
+  .tetra-card.visible { display: block; }
+  #tetraCanvas {
+    display: block;
+    width: 100%;
+    height: 260px;
+    border-radius: 10px;
+    cursor: grab;
+  }
+  #tetraCanvas:active { cursor: grabbing; }
+  .tetra-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>VSEPR 분자 구조 시뮬레이터</h1>
+  <p>공유 전자쌍 수에 따른 분자 구조 예상 — 고등학교 화학</p>
+</div>
+
+<div class="tab-row">
+  <button class="tab-btn" id="btn2" onclick="setPairs(2)">고리 2개</button>
+  <button class="tab-btn" id="btn3" onclick="setPairs(3)">고리 3개</button>
+  <button class="tab-btn active" id="btn4" onclick="setPairs(4)">고리 4개</button>
+</div>
+
+<div class="main-grid">
+  <div class="card">
+    <div class="card-label">🔗 은박지 고리 모형</div>
+    <svg id="ringSvg" viewBox="0 0 260 240"></svg>
+  </div>
+  <div class="card">
+    <div class="card-label">⚛️ 전자쌍 반발 모델</div>
+    <svg id="molSvg" viewBox="0 0 260 240"></svg>
+  </div>
+</div>
+
+<div class="tetra-card card" id="tetraCard">
+  <div class="card-label">🧊 정사면체 입체 모형 (CH₄)</div>
+  <canvas id="tetraCanvas"></canvas>
+  <div class="tetra-hint">마우스로 드래그하여 회전할 수 있습니다</div>
+</div>
+
+<div class="info-card card">
+  <div class="info-top">
+    <div class="info-item">
+      <div class="info-val" id="shapeVal">정사면체형</div>
+      <div class="info-key">분자 구조</div>
+    </div>
+    <div class="info-item">
+      <div class="info-val angle" id="angleVal">109.5°</div>
+      <div class="info-key">결합각</div>
+    </div>
+    <div class="info-item">
+      <div class="info-val" id="exVal">CH₄</div>
+      <div class="info-key">예시 분자</div>
+    </div>
+  </div>
+  <div class="principle-box" id="principleText"></div>
+  <div class="legend-row">
+    <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div> 공유 전자쌍 (결합 원자)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#374151"></div> 중심 원자</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#dc2626; opacity:.7"></div> 결합각</div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  2: {
+    shape: '직선형',
+    angle: '180°',
+    example: 'BeCl₂, CO₂',
+    principle: '<strong>전자쌍 2개</strong>는 서로 반대 방향(180°)으로 배치될 때 반발력이 가장 작습니다.<br>두 고리가 <strong>직선</strong>을 이루는 모형과 동일합니다.',
+  },
+  3: {
+    shape: '평면 삼각형',
+    angle: '120°',
+    example: 'BF₃, SO₃',
+    principle: '<strong>전자쌍 3개</strong>는 정삼각형의 세 꼭짓점 방향(120°)으로 배치될 때 반발력이 가장 작습니다.<br>세 고리가 <strong>평면 삼각형</strong>을 이루는 모형과 동일합니다.',
+  },
+  4: {
+    shape: '정사면체형',
+    angle: '109.5°',
+    example: 'CH₄, CCl₄',
+    principle: '<strong>전자쌍 4개</strong>는 정사면체의 네 꼭짓점 방향(109.5°)으로 배치될 때 반발력이 가장 작습니다.<br>네 고리가 <strong>정사면체</strong>를 이루는 모형과 동일합니다.',
+  }
+};
+
+let currentPairs = 4;
+
+function setPairs(n) {
+  currentPairs = n;
+  [2,3,4].forEach(k => {
+    document.getElementById('btn'+k).classList.toggle('active', k===n);
+  });
+  const d = DATA[n];
+  document.getElementById('shapeVal').textContent = d.shape;
+  document.getElementById('angleVal').textContent = d.angle;
+  document.getElementById('exVal').textContent = d.example;
+  document.getElementById('principleText').innerHTML = d.principle;
+  drawRings(n);
+  drawMol(n);
+  document.getElementById('tetraCard').classList.toggle('visible', n === 4);
+}
+
+/* ─── 은박지 고리 모형 ─── */
+function drawRings(n) {
+  const svg = document.getElementById('ringSvg');
+  svg.innerHTML = '';
+  const W = 260, H = 240;
+  const cx = W/2, cy = H/2 + 5;
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+
+  // Ring drawing function
+  // Each ring is an oval (ellipse) representing a loop of foil
+  // Center connection point at ring's inner edge
+  const R = 78; // distance from center to ring center
+
+  let ringConfigs = [];
+  if (n === 2) {
+    // Two rings opposite each other — horizontal line
+    ringConfigs = [
+      { angle: 0   },
+      { angle: 180 },
+    ];
+  } else if (n === 3) {
+    // Three rings in triangle
+    ringConfigs = [
+      { angle: 90  },
+      { angle: 210 },
+      { angle: 330 },
+    ];
+  } else {
+    // Four rings — quadrilateral (representing tetrahedral projected)
+    ringConfigs = [
+      { angle: 45  },
+      { angle: 135 },
+      { angle: 225 },
+      { angle: 315 },
+    ];
+  }
+
+  const toRad = d => d * Math.PI / 180;
+
+  // Compute ring center positions
+  const rings = ringConfigs.map(c => {
+    const a = toRad(c.angle);
+    return { x: cx + Math.cos(a)*R, y: cy + Math.sin(a)*R, angle: c.angle };
+  });
+
+  // Draw connection point (center node)
+  // Draw dashed lines from center to each ring first (behind rings)
+  rings.forEach(r => {
+    el('line', {
+      x1: cx, y1: cy, x2: r.x, y2: r.y,
+      stroke: '#c7d2e8', 'stroke-width': 1.5, 'stroke-dasharray': '4 3'
+    });
+  });
+
+  // Draw each ring as an ellipse (like a physical foil ring)
+  rings.forEach((r, i) => {
+    const a = toRad(r.angle);
+    // Ring is tilted so its opening faces the center
+    const tiltAngle = r.angle; // rotate ring so the "flat" face is visible
+
+    // Shadow
+    el('ellipse', {
+      cx: r.x + 2, cy: r.y + 2,
+      rx: 30, ry: 16,
+      transform: `rotate(${tiltAngle}, ${r.x+2}, ${r.y+2})`,
+      fill: 'rgba(0,0,0,0.07)'
+    });
+
+    // Ring body (thick stroke = physical foil loop)
+    // Use a circle outline (ring shape)
+    el('ellipse', {
+      cx: r.x, cy: r.y, rx: 30, ry: 16,
+      transform: `rotate(${tiltAngle}, ${r.x}, ${r.y})`,
+      fill: 'rgba(200,210,230,0.18)',
+      stroke: '#8fa8cc',
+      'stroke-width': 4,
+    });
+
+    // Inner highlight (shiny foil effect)
+    el('ellipse', {
+      cx: r.x, cy: r.y, rx: 22, ry: 10,
+      transform: `rotate(${tiltAngle}, ${r.x}, ${r.y})`,
+      fill: 'none',
+      stroke: 'rgba(255,255,255,0.6)',
+      'stroke-width': 2,
+    });
+
+    // Tape/glue mark at connection point (where rings meet center)
+    const tapeCx = cx + Math.cos(a)*(R*0.18);
+    const tapeCy = cy + Math.sin(a)*(R*0.18);
+
+    // Small label: 고리 번호
+    el('text', {
+      x: r.x, y: r.y,
+      'text-anchor': 'middle',
+      'dominant-baseline': 'central',
+      'font-size': '11',
+      'font-weight': '700',
+      fill: '#2563eb',
+      'font-family': 'Noto Sans KR, sans-serif'
+    }).textContent = (i+1);
+  });
+
+  // Connection dots where rings meet
+  rings.forEach(r => {
+    const a = toRad(r.angle);
+    const jx = cx + Math.cos(a)*18;
+    const jy = cy + Math.sin(a)*18;
+    el('circle', { cx: jx, cy: jy, r: 5, fill: '#60a5fa', stroke: '#2563eb', 'stroke-width': 1.5 });
+  });
+
+  // Center point (where all rings connect)
+  el('circle', { cx, cy, r: 9, fill: '#374151', stroke: '#fff', 'stroke-width': 2 });
+  el('text', {
+    x: cx, y: cy, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-size': '9', fill: 'white', 'font-weight': '700', 'font-family': 'Noto Sans KR, sans-serif'
+  }).textContent = '중';
+
+  // Shape label below
+  const shapeLabel = { 2: '← 직선 →', 3: '▽ 삼각형', 4: '◇ 사면체' }[n];
+  el('text', {
+    x: cx, y: H - 10, 'text-anchor': 'middle',
+    'font-size': '12', fill: '#6b7280', 'font-family': 'Noto Sans KR, sans-serif', 'font-weight': '500'
+  }).textContent = shapeLabel;
+}
+
+/* ─── 전자쌍 반발 모델 ─── */
+function drawMol(n) {
+  const svg = document.getElementById('molSvg');
+  svg.innerHTML = '';
+  const W = 260, H = 240;
+  const cx = W/2, cy = H/2;
+  const R = 80;
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+
+  const toRad = d => d * Math.PI / 180;
+
+  let atomAngles = [];
+  let atomLabels = [];
+  let bondAngles = [];
+  let bondArcR = 36;
+
+  if (n === 2) {
+    atomAngles = [0, 180];
+    atomLabels = ['Cl', 'Cl'];
+    bondAngles = [[0, 180]];
+    bondArcR = 36;
+  } else if (n === 3) {
+    atomAngles = [90, 210, 330];
+    atomLabels = ['F', 'F', 'F'];
+    bondAngles = [[90, 210]];
+    bondArcR = 38;
+  } else {
+    atomAngles = [45, 135, 225, 315];
+    atomLabels = ['H', 'H', 'H', 'H'];
+    bondAngles = [[45, 135]];
+    bondArcR = 36;
+  }
+
+  const atoms = atomAngles.map((a, i) => ({
+    x: cx + Math.cos(toRad(a)) * R,
+    y: cy + Math.sin(toRad(a)) * R,
+    angle: a,
+    label: atomLabels[i]
+  }));
+
+  // For n=4, draw back bonds as dashed
+  const frontIdx = n === 4 ? [0, 1] : null;
+  const backIdx  = n === 4 ? [2, 3] : null;
+
+  // Draw back bonds first (dashed)
+  if (backIdx) {
+    backIdx.forEach(i => {
+      el('line', {
+        x1: cx, y1: cy, x2: atoms[i].x, y2: atoms[i].y,
+        stroke: '#93c5fd', 'stroke-width': 2,
+        'stroke-dasharray': '5 4', 'stroke-linecap': 'round'
+      });
+    });
+  }
+
+  // Draw front solid bonds
+  const solidIdx = frontIdx || atoms.map((_,i) => i);
+  solidIdx.forEach(i => {
+    const atom = atoms[i];
+    el('line', {
+      x1: cx, y1: cy, x2: atom.x, y2: atom.y,
+      stroke: '#2563eb', 'stroke-width': 3, 'stroke-linecap': 'round'
+    });
+  });
+
+  // Draw angle arc between first two bonds
+  const [a1deg, a2deg] = [atomAngles[0], atomAngles[1]];
+  const a1 = toRad(a1deg), a2 = toRad(a2deg);
+  const arcX1 = cx + Math.cos(a1)*bondArcR;
+  const arcY1 = cy + Math.sin(a1)*bondArcR;
+  const arcX2 = cx + Math.cos(a2)*bondArcR;
+  const arcY2 = cy + Math.sin(a2)*bondArcR;
+  const sweep = (a2deg - a1deg + 360) % 360 > 180 ? 0 : 0;
+  el('path', {
+    d: `M ${arcX1} ${arcY1} A ${bondArcR} ${bondArcR} 0 0 1 ${arcX2} ${arcY2}`,
+    fill: 'none', stroke: '#dc2626', 'stroke-width': 1.5,
+    'stroke-dasharray': '3 2', opacity: '0.8'
+  });
+
+  // Angle label
+  const midAng = toRad((a1deg + a2deg) / 2);
+  const labelR = bondArcR + 16;
+  el('text', {
+    x: cx + Math.cos(midAng)*labelR,
+    y: cy + Math.sin(midAng)*labelR,
+    'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-size': '12', fill: '#dc2626',
+    'font-family': 'Noto Sans KR, sans-serif', 'font-weight': '700'
+  }).textContent = DATA[n].angle;
+
+  // Draw back atoms (smaller, behind)
+  if (backIdx) {
+    backIdx.forEach(i => {
+      const atom = atoms[i];
+      el('circle', { cx: atom.x, cy: atom.y, r: 16, fill: 'rgba(37,99,235,0.1)', stroke: '#93c5fd', 'stroke-width': 1.5 });
+      el('circle', { cx: atom.x, cy: atom.y, r: 10, fill: '#93c5fd' });
+      el('text', {
+        x: atom.x, y: atom.y, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+        'font-size': '11', fill: 'white', 'font-weight': '700', 'font-family': 'Noto Sans KR, sans-serif'
+      }).textContent = atom.label;
+    });
+  }
+
+  // Draw front atoms
+  solidIdx.forEach(i => {
+    const atom = atoms[i];
+    el('circle', { cx: atom.x, cy: atom.y, r: 18, fill: 'rgba(37,99,235,0.12)' });
+    el('circle', { cx: atom.x, cy: atom.y, r: 12, fill: '#2563eb' });
+    el('text', {
+      x: atom.x, y: atom.y, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+      'font-size': '11', fill: 'white', 'font-weight': '700', 'font-family': 'Noto Sans KR, sans-serif'
+    }).textContent = atom.label;
+  });
+
+  // Center atom
+  el('circle', { cx, cy, r: 20, fill: '#374151', stroke: '#fff', 'stroke-width': 2 });
+  el('text', {
+    x: cx, y: cy, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    'font-size': '11', fill: 'white', 'font-weight': '700', 'font-family': 'Noto Sans KR, sans-serif'
+  }).textContent = '중심';
+
+  // Shape note
+  const noteLabel = { 2: '직선형 (180°)', 3: '평면 삼각형 (120°)', 4: '정사면체형 (109.5°)' }[n];
+  el('text', {
+    x: cx, y: H - 10, 'text-anchor': 'middle',
+    'font-size': '12', fill: '#6b7280', 'font-family': 'Noto Sans KR, sans-serif', 'font-weight': '500'
+  }).textContent = noteLabel;
+}
+
+// Init
+setPairs(4);
+
+/* ─── 3D 정사면체 모형 ─── */
+(function() {
+  const canvas = document.getElementById('tetraCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // 정사면체 꼭짓점 (단위 정사면체, 중심 원점)
+  const sqrt2 = Math.sqrt(2);
+  const sqrt3 = Math.sqrt(3);
+  // 정사면체 4개 꼭짓점 좌표 (정규화)
+  const verts = [
+    [ 0,        1,        0      ],   // 위 꼭짓점
+    [ sqrt2*2/3, -1/3,    0      ],   // 앞오른
+    [-sqrt2/3,  -1/3,  sqrt2*sqrt3/3 ], // 뒤왼
+    [-sqrt2/3,  -1/3, -sqrt2*sqrt3/3 ], // 앞왼
+  ];
+
+  const atomColors = ['#2563eb','#2563eb','#2563eb','#2563eb'];
+  const centerColor = '#374151';
+  const edgeColor = 'rgba(37,99,235,0.55)';
+
+  let rotX = 0.35, rotY = 0.5;
+  let dragging = false, lastX = 0, lastY = 0;
+  let animId2;
+
+  function project(v, scale, offX, offY) {
+    // 카메라는 Z축 방향 — 단순 원근 투영
+    const z = v[2] + 3.5;
+    const f = scale / z;
+    return [v[0]*f + offX, -v[1]*f + offY, v[2]];
+  }
+
+  function rotateY(v, a) {
+    const c = Math.cos(a), s = Math.sin(a);
+    return [v[0]*c + v[2]*s, v[1], -v[0]*s + v[2]*c];
+  }
+  function rotateX(v, a) {
+    const c = Math.cos(a), s = Math.sin(a);
+    return [v[0], v[1]*c - v[2]*s, v[1]*s + v[2]*c];
+  }
+
+  function draw3D() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    const scale = Math.min(W, H) * 1.0;
+    const cx = W/2, cy = H/2;
+
+    // 회전 적용
+    const rotated = verts.map(v => {
+      let r = rotateY(v, rotY);
+      r = rotateX(r, rotX);
+      return r;
+    });
+
+    // 투영
+    const proj = rotated.map(v => project(v, scale, cx, cy));
+
+    // 중심(원점)도 투영
+    let ctr = rotateY([0,0,0], rotY);
+    ctr = rotateX(ctr, rotX);
+    const pctr = project(ctr, scale, cx, cy);
+
+    // 깊이순 정렬로 엣지/원자 그리기
+    // 모든 엣지 (4C2 = 6개)
+    const edges = [];
+    for (let i = 0; i < 4; i++)
+      for (let j = i+1; j < 4; j++)
+        edges.push([i, j]);
+
+    // 엣지: 뒤에서 먼저 그림 (z 평균 기준 정렬)
+    const sortedEdges = edges.slice().sort((a, b) => {
+      const za = (rotated[a[0]][2] + rotated[a[1]][2]) / 2;
+      const zb = (rotated[b[0]][2] + rotated[b[1]][2]) / 2;
+      return za - zb; // 뒤(작은 z)부터
+    });
+
+    sortedEdges.forEach(([i, j]) => {
+      const pi = proj[i], pj = proj[j];
+      const avgZ = (rotated[i][2] + rotated[j][2]) / 2;
+      // 뒤쪽 엣지는 점선
+      const isDashed = avgZ < -0.1;
+      ctx.beginPath();
+      ctx.moveTo(pi[0], pi[1]);
+      ctx.lineTo(pj[0], pj[1]);
+      if (isDashed) {
+        ctx.setLineDash([6, 5]);
+        ctx.strokeStyle = 'rgba(37,99,235,0.3)';
+        ctx.lineWidth = 1.5;
+      } else {
+        ctx.setLineDash([]);
+        ctx.strokeStyle = edgeColor;
+        ctx.lineWidth = 2.5;
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+
+    // 중심에서 각 꼭짓점으로 결합선
+    proj.forEach((p, i) => {
+      const z = rotated[i][2];
+      const behind = z < 0;
+      ctx.beginPath();
+      ctx.moveTo(pctr[0], pctr[1]);
+      ctx.lineTo(p[0], p[1]);
+      ctx.setLineDash(behind ? [5,4] : []);
+      ctx.strokeStyle = behind ? 'rgba(37,99,235,0.25)' : 'rgba(37,99,235,0.7)';
+      ctx.lineWidth = behind ? 1.5 : 2.5;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+
+    // 원자 (깊이순 정렬)
+    const atomOrder = [0,1,2,3].sort((a,b) => rotated[a][2] - rotated[b][2]);
+    atomOrder.forEach(i => {
+      const p = proj[i];
+      const z = rotated[i][2];
+      // 깊이에 따라 크기/밝기 조절
+      const t = (z + 1.2) / 2.4; // 0(뒤)~1(앞)
+      const r = 14 + t * 6;
+      const alpha = 0.5 + t * 0.5;
+
+      // 글로우
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], r + 6, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(37,99,235,${0.08 * alpha})`;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(37,99,235,${alpha})`;
+      ctx.fill();
+
+      // 하이라이트
+      ctx.beginPath();
+      ctx.arc(p[0] - r*0.25, p[1] - r*0.28, r*0.35, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${0.35 * alpha})`;
+      ctx.fill();
+
+      ctx.font = `bold ${Math.round(10 + t*3)}px 'Noto Sans KR', sans-serif`;
+      ctx.fillStyle = `rgba(255,255,255,${Math.max(0.5, alpha)})`;
+      ctx.textAlign = 'middle';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('H', p[0], p[1]);
+    });
+
+    // 중심 원자
+    const cr = 18;
+    ctx.beginPath();
+    ctx.arc(pctr[0], pctr[1], cr + 5, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(55,65,81,0.1)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(pctr[0], pctr[1], cr, 0, Math.PI*2);
+    ctx.fillStyle = '#374151';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(pctr[0] - cr*0.25, pctr[1] - cr*0.28, cr*0.35, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fill();
+    ctx.font = "bold 11px 'Noto Sans KR', sans-serif";
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('C', pctr[0], pctr[1]);
+
+    // 결합각 표시
+    ctx.font = "12px 'Noto Sans KR', sans-serif";
+    ctx.fillStyle = '#dc2626';
+    ctx.textAlign = 'left';
+    ctx.fillText('결합각: 109.5°', 10, H - 14);
+  }
+
+  function resizeCanvas3D() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = (rect.width - 32) * dpr;
+    canvas.height = 260 * dpr;
+    ctx.scale(dpr, dpr);
+  }
+
+  function autoRotate() {
+    if (!dragging) rotY += 0.008;
+    resizeCanvas3D();
+    draw3D();
+    animId2 = requestAnimationFrame(autoRotate);
+  }
+
+  canvas.addEventListener('mousedown', e => {
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+  });
+  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    rotY += (e.clientX - lastX) * 0.012;
+    rotX += (e.clientY - lastY) * 0.012;
+    lastX = e.clientX; lastY = e.clientY;
+  });
+  canvas.addEventListener('touchstart', e => {
+    dragging = true;
+    lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+  }, {passive:true});
+  window.addEventListener('touchend', () => { dragging = false; });
+  window.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    rotY += (e.touches[0].clientX - lastX) * 0.012;
+    rotX += (e.touches[0].clientY - lastY) * 0.012;
+    lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+  }, {passive:true});
+
+  autoRotate();
+})();
+</script>
+</body>
+</html>
